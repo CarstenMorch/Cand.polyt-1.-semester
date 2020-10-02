@@ -46,14 +46,18 @@ clc
 clear 
 
     PF = @PAL_Logistic;
-    StimLevels = [-3:1:3];
-    NumPos = [55 55 66 75 91 94 97];    %observer data
-    OutOfNum = 100.*ones(size(StimLevels));
+%     StimLevels = [-3:1:3];
+%     NumPos = [55 55 66 75 91 94 97];    %observer data
+%     OutOfNum = 100.*ones(size(StimLevels));
+    
+    StimLevels = [.01 .03 .05 .07 .09 .11];
+    NumPos = [59 53 68 83 92 99]; %number of trials with correct response.
+    OutOfNum = [100 100 100 100 100 100]; %number of stimulus in each stimLevel
 
-    searchGrid.alpha = [-1:.1:1];
-    searchGrid.beta = 10.^[-1:.1:2];
-    searchGrid.gamma = .5;
-    searchGrid.lambda = [0:.005:.06];
+    searchGrid.alpha = [0.01:0.001:0.11];
+    searchGrid.beta = logspace(0,3,101);
+    searchGrid.gamma = 0.5;
+    searchGrid.lambda = 0.02;
    
     
    disp('palamedes') 
@@ -63,101 +67,77 @@ clear
    disp('homemade') 
    [paramsValues] = BruteForceSearchFunction(StimLevels, NumPos, ...
        OutOfNum, searchGrid, PF)
+  
+%% steepest ascent 
+
+% ALGORITHM PARAMETERS 
+dx    = 0.001; 
+dy    = 0.001; 
+dz    = 0.001;
+dm    = 0.001; 
+alpha = 0.1; 
+
+% Initial Guess 
+x0 = paramsValues(1);
+y0 = paramsValues(2);
+z0 = paramsValues(3); 
+m0 = paramsValues(4);
+
+
+% PREFROM ALGORITHM
+tol = 1e-100; 
+g   = [inf;inf;inf];
+
+n = 0;
+while norm(g) > tol 
+    % compute gradient 
+    f1 = SingleValueLikelihoodFunction(StimLevels,NumPos, OutOfNum,[x0-dx/2, y0, z0, m0], PF); 
+    f2 = SingleValueLikelihoodFunction(StimLevels,NumPos, OutOfNum,[x0+dx/2, y0, z0, m0], PF);
+    gx = (f2 - f1)/dx; 
+    
+    f1 = SingleValueLikelihoodFunction(StimLevels,NumPos, OutOfNum,[x0, y0-dy/2, z0, m0], PF); 
+    f2 = SingleValueLikelihoodFunction(StimLevels,NumPos, OutOfNum,[x0, y0+dy/2, z0, m0], PF);
+    gy = (f2 - f1)/dy; 
+    
+    f1 = SingleValueLikelihoodFunction(StimLevels,NumPos, OutOfNum,[x0,y0, z0-dz/2, m0], PF); 
+    f2 = SingleValueLikelihoodFunction(StimLevels,NumPos, OutOfNum,[x0,y0, z0+dz/2, m0], PF);
+    gz = (f2 - f1)/dz; 
+    
+    f1 = SingleValueLikelihoodFunction(StimLevels,NumPos, OutOfNum,[x0,y0, z0, m0-dm/2], PF); 
+    f2 = SingleValueLikelihoodFunction(StimLevels,NumPos, OutOfNum,[x0,y0, z0, m0-dm/2], PF);
+    gm = (f2 - f1)/dm;
+    
+    g = [ gx ; gy ; gz ; gm];
    
-   %%
-   
-%     for a = 1:length(searchGrid.alpha)
-%         for b = 1:length(searchGrid.beta)
-%             for g = 1:length(searchGrid.gamma)
-%                 for L = 1:length(searchGrid.lambda) 
-%                     parameterGrid(b,a,g,L) = {[searchGrid.alpha(a) searchGrid.beta(b) searchGrid.gamma(g)  searchGrid.lambda(L)]};
-%                 end
-%             end
-%         end 
-%     end 
-   
-    likelihoodGrid = zeros(length(searchGrid.alpha),length(searchGrid.beta),length(searchGrid.gamma),length(searchGrid.lambda));
     
-    for a = 1:length(searchGrid.alpha)
-        for b = 1:length(searchGrid.beta)
-            for g = 1:length(searchGrid.gamma)
-                for L = 1:length(searchGrid.lambda) 
-                    for sLevel = 1:length(StimLevels)
-                        temp(sLevel) = (PF([searchGrid.alpha(a), searchGrid.beta(b), searchGrid.gamma(g), searchGrid.lambda(L)], StimLevels(sLevel))^NumPos(sLevel))*((1-PF([searchGrid.alpha(a), searchGrid.beta(b), searchGrid.gamma(g), searchGrid.lambda(L)], StimLevels(sLevel)))^(OutOfNum(sLevel)-NumPos(sLevel)));
-                    end
-                    likelihoodGrid(a,b,g,L)=prod(temp); 
-                    clear temp; 
-                end
-            end
-        end 
-    end 
-    
-    Amax = max(likelihoodGrid(:));                                           % Maximum Value
-    Idx = find(likelihoodGrid(:) == Amax);                                   % Returns Linear Indices To All ‘Amax’ Values
-    [r,c,dim3,dim4] = ind2sub(size(likelihoodGrid), Idx); 
-    
-    parameter = [searchGrid.alpha(r) searchGrid.beta(c) searchGrid.gamma(dim3) searchGrid.lambda(dim4)]
-    
-    
-%   [paramsValues LL] = PAL_PFML_BruteForceFit(StimLevels, NumPos, ...
-%       OutOfNum, searchGrid, PF)
-  
-  
-  
-  
-  
-  
-  
-  %%
-  
-  [parameterGrid.alpha, parameterGrid.beta, parameterGrid.gamma, parameterGrid.lambda] = ndgrid(searchGrid.alpha,searchGrid.beta,searchGrid.gamma,searchGrid.lambda)
-  [paramsGrid.alpha, paramsGrid.beta, paramsGrid.gamma, paramsGrid.lambda] = ndgrid(searchGrid.alpha,searchGrid.beta,searchGrid.gamma,searchGrid.lambda)
+    % update Postion of Guess
+    x0 = x0 + alpha*gx; 
+    y0 = y0 + alpha*gy;     
+    z0 = z0 + alpha*gz; 
+    m0 = m0 + alpha*gm; 
 
-  % [x, y, z, d] = ndgrid: X columns (x,:) , Y rovs (:,y), Z (:,:,z,:), D (:,:,:,d)
- 
+    % counter
+    n = n+1; 
+end 
 
-   
-      
-  matrix(1,1,:) = vector1;
-  
-    
-  
-  %Fit data:
-  %PF(paramsGrid,StimLevels(1))
-  LLspace = zeros(size(paramsGrid.alpha,1),size(paramsGrid.alpha,2),size(paramsGrid.alpha,3),size(paramsGrid.alpha,4));
+% REPORT THAN ANSWER
+[x0 y0 z0 m0]
+SingleValueLikelihoodFunction(StimLevels,NumPos, OutOfNum,[x0,y0, z0, m0], PF)
+C = {'number of iteratation :', n };
+sprintf('%s %d ',C{:})  
 
-              
-  for level = 1:length(StimLevels)
-        LLspace = LLspace + NumPos(level).*log(PF(paramsGrid,StimLevels(level)))+(OutOfNum(level)-NumPos(level)).*log(1-PF(paramsGrid,StimLevels(level)));
-    end
-    
-    [maxim, I] = PAL_findMax(LLspace)
-
-
-  [paramsValues LL] = PAL_PFML_BruteForceFit(StimLevels, NumPos, ...
-      OutOfNum, searchGrid, PF)
-  
-  
-  
 
 
 %%
-clc 
-clear 
 
-x = zeros(5,5,5)
-x(1,2,3) = 12
-[maxim I] = PAL_findMax(x)
-
-LLspace = LLspace + NumPos(level).*log(PF(paramsGrid,StimLevels(level)))+(OutOfNum(level)-NumPos(level)).*log(1-PF(paramsGrid,StimLevels(level)));
-% [x, y, z, d] = ndgrid([1 3],[10 2 2], [5 1], [20 40 30 20])
- 
-parameterGrid
-
-
-
-
-
+PropCorrectData = NumPos./OutOfNum;
+StimLevelsFine = [min(StimLevels):(max(StimLevels) - min(StimLevels))./1000:max(StimLevels)];
+Fit = PF(paramsValues, StimLevelsFine);
+plot(StimLevelsFine,Fit,'g-','linewidth',2);
+hold on;
+plot(StimLevels, PropCorrectData,'k.','markersize',40);
+set(gca, 'fontsize',12);
+axis([0 .12 .4 1]);
 
 
 
