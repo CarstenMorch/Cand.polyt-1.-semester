@@ -1,25 +1,17 @@
 %
-%BruteForceSearchFunction   Find maximum of of 4D parameters grid.
+%BruteForceSearchFunc   Find maximum of of 4D parameters grid.
 %
 %   syntax: [parameters ] = ...
 %       PAL_PFML_BruteForceFit(StimLevels, NumPos, OutOfNum, ...
 %       searchGrid, PF)
 %
 % Gives sames results as PAL_PFML_BruteForceFit
+%
+%Latest edited: 
+%   06-10-2020
 
 
-function [ parameters ] = BruteForceSearchFunction(stimLevels,NumPos, OutOfNum, searchGrid, PF)
-   %     for a = 1:length(searchGrid.alpha)
-%         for b = 1:length(searchGrid.beta)
-%             for g = 1:length(searchGrid.gamma)
-%                 for L = 1:length(searchGrid.lambda) 
-%                     parameterGrid(b,a,g,L) = {[searchGrid.alpha(a) searchGrid.beta(b) searchGrid.gamma(g)  searchGrid.lambda(L)]};
-%                 end
-%             end
-%         end 
-%     end 
-   
-
+function [ parameters ] = BruteForceSearchFunc(stimLevels,NumPos, OutOfNum, searchGrid, PF)
     % Create a likelihood grid 
     likelihoodGrid = zeros(length(searchGrid.alpha),length(searchGrid.beta),length(searchGrid.gamma),length(searchGrid.lambda));
     
@@ -46,11 +38,3 @@ function [ parameters ] = BruteForceSearchFunction(stimLevels,NumPos, OutOfNum, 
     % Return found values 
     parameters = [searchGrid.alpha(r) searchGrid.beta(c) searchGrid.gamma(dim3) searchGrid.lambda(dim4)];
 end 
-    
-    
-    
- 
-        
-
-
- 
