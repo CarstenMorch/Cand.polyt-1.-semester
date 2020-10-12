@@ -2,6 +2,7 @@
 %% Setup (PSI METHODE 1/3) 
 clc 
 clear 
+close all; 
 
 grain = 201; 
 PM.PF = @PAL_Gumbel;
@@ -43,19 +44,22 @@ paramsGen = [0, 1, .5, .02];
         end 
     end
     
-    NumTrials = 20;
+    NumTrials = 100;
 
-    
-    PMtest = PAL_AMPM_setupPM('priorAlphaRange',priorAlphaRange,...
-                  'priorBetaRange',priorBetaRange,...
-                  'priorGammaRange',priorGammaRange,...
-                  'priorLambdaRange',priorLambdaRange,...
-                  'numtrials',NumTrials,...
-                  'PF' , PM.PF,...
-                  'stimRange',PM.stimRange);  
+     %TEST: 
+%     PMtest = PAL_AMPM_setupPM('priorAlphaRange',priorAlphaRange,...
+%                   'priorBetaRange',priorBetaRange,...
+%                   'priorGammaRange',priorGammaRange,...
+%                   'priorLambdaRange',priorLambdaRange,...
+%                   'numtrials',NumTrials,...
+%                   'PF' , PM.PF,...
+%                   'stimRange',PM.stimRange);  
     
     clear priorAlphaRange priorGammaRange priorBetaRange priorLambdaRange
     clear a b g L sLevel 
+    
+    doPlot = input('Do not plot (0), plot threshold (1)?: ');
+
     
 %% First time (PSI METHODE 2/3) 
     % Step 1 to 2 
@@ -68,31 +72,51 @@ paramsGen = [0, 1, .5, .02];
 
     clear newIntensityIndexPosition minEntropy
     
-    
+    if (doPlot) 
+        figure(1) 
+        xlim([1 NumTrials])
+    end 
 
                   
 %% Simulate data and update method (PSI METHODE 3/3) 
-NumTrials = 20;
 
 while length(PM.x) < NumTrials
     response = rand(1) < PM.PF(paramsGen, PM.xCurrent);    %simulate observer
 
     %update PM based on response
     PM = UpdateFunc(PM, response); 
-    PMtest = PAL_AMPM_updatePM(PMtest,response);
-
+    % Test --> PMtest = PAL_AMPM_updatePM(PMtest,response);
+    
+    % plot? 
+    if (doPlot) 
+        figure(1) 
+        hold on; 
+        plot(PM.threshold, 'b')
+          
+        figure(1) 
+        hold on; 
+        if ~response 
+            plot(length(PM.x),PM.x(end),'ok','MarkerFaceColor','k');
+        else 
+            plot(length(PM.x),PM.x(end),'ok');
+        end 
+    end 
+    pause(0.1)
 end
+ 
+
 
 disp('finish')
 disp('Threshold estimate - homemade:')
 PM.threshold(end)
 
-disp('Threshold estimate - palamedes:')
-PMtest.threshold(end)
-
 disp('Slope estimate - homemade :')
 10.^PM.slope(end)           %PM.slope is in log10 units of beta parameter
 
-disp('Slope estimate - palamedes:')
-10.^PMtest.slope(end)           %PM.slope is in log10 units of beta parameter
+% Test :
+% disp('Threshold estimate - palamedes:')
+% PMtest.threshold(end)
+% 
+% disp('Slope estimate - palamedes:')
+% 10.^PMtest.slope(end)           %PM.slope is in log10 units of beta parameter
 
