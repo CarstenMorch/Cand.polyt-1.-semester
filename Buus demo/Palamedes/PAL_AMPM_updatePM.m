@@ -40,7 +40,6 @@
 %Modified: Palamedes version 1.5.0, 1.6.0, 1.6.1, 1.6.3 (see History.m)
 
 function PM = PAL_AMPM_updatePM(PM,response,varargin)
-disp(' --> update') 
 fixLapse = false;
 
 valid = 0;

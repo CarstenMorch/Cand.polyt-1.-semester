@@ -27,7 +27,7 @@ end
 
 
 if fixLapse
-    disp('fixlapse')
+%     disp('fixlapse')
     tempSuccess = zeros(size(PM.posteriorTplus1givenSuccess(:,:,:,1,:)));
     tempFailure = zeros(size(PM.posteriorTplus1givenSuccess(:,:,:,1,:)));
     [trash, I] = PAL_findMax(PM.pdf);
@@ -38,10 +38,10 @@ if fixLapse
     end
     expectedEntropy = PAL_Entropy(tempSuccess,4,PM.marginalize).*pSuccessGivenx + PAL_Entropy(tempFailure,4,PM.marginalize).*(1-pSuccessGivenx);        
 else
-    disp('HERE --> with marginalize')
+   % disp('HERE --> with marginalize')
     expectedEntropy = PAL_Entropy(PM.posteriorTplus1givenSuccess,4,PM.marginalize).*pSuccessGivenx + PAL_Entropy(PM.posteriorTplus1givenFailure,4,PM.marginalize).*(1-pSuccessGivenx);
 
-    disp('HERE --> without marginalize')
-    PAL_Entropy(PM.posteriorTplus1givenSuccess).*pSuccessGivenx + PAL_Entropy(PM.posteriorTplus1givenFailure).*(1-pSuccessGivenx);
+%     disp('HERE --> without marginalize')
+%     PAL_Entropy(PM.posteriorTplus1givenSuccess).*pSuccessGivenx + PAL_Entropy(PM.posteriorTplus1givenFailure).*(1-pSuccessGivenx);
 
 end

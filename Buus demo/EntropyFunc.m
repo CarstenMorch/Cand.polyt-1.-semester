@@ -5,9 +5,13 @@
 
 function [minEntropy, newIntensityIndexPosition] = EntropyFunc(PosteriorNextTrailSuccess,PosteriorNextTrialFailure,pSuccessGivenx)
 
-%TRIN 3: 
-    %Ht(x,r)
-    %success
+% Step 3: 
+    % "Estimate the entropy of the probability density function over the 
+    % space of psychometric functions, given that at the next trial a test 
+    % of intensity x will produce the response r" [Kontsevich]
+    
+    % Ht(x,r)
+    % success
     EntropyS = PosteriorNextTrailSuccess.*log(PosteriorNextTrailSuccess);
     EntropyS(isnan(EntropyS)) = 0;          %effectively defines 0.*log(0) to equal 0.
     for d = 1:4
@@ -15,7 +19,7 @@ function [minEntropy, newIntensityIndexPosition] = EntropyFunc(PosteriorNextTrai
     end
     EntropyS = -EntropyS;
     
-    %Failure
+    % failure
     EntropyF = PosteriorNextTrialFailure.*log(PosteriorNextTrialFailure);
     EntropyF(isnan(EntropyF)) = 0;          %effectively defines 0.*log(0) to equal 0.
     for d = 1:4
@@ -23,12 +27,18 @@ function [minEntropy, newIntensityIndexPosition] = EntropyFunc(PosteriorNextTrai
     end
     EntropyF = -EntropyF;
     
-%TRIN 4:  
-    %E[Ht(x)]:      
+% Step 4:  
+    % "Estimate the expected entropy for each test intensity x" 
+    % [Kontsevich]
+    
+    % E[Ht(x)]:      
     Entropy = EntropyS.*pSuccessGivenx + EntropyF.*(1-pSuccessGivenx); % [1,1,1,1,21]
     
-%TRIN 5: 
-    %xt+1 = arg min E[Ht(x)],
+% Step 5:
+    % "Find the test intensity that has the minimum expected entropy"
+    % [Kontsevich]
+    
+    % xt+1 = arg min E[Ht(x)]:
     [minEntropy, newIntensityIndexPosition] = min(squeeze(Entropy)); % minEntropy: the value, i; index position. 
     
 
