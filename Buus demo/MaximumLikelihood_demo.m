@@ -2,6 +2,7 @@
 %% Create a Logistic Function 
 clc;
 clear;
+close all; 
 
 StimLevels = [0:0.5:10]; 
 coef = [3 1 0.1 0]; 
