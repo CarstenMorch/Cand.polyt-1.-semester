@@ -4,14 +4,13 @@ clc
 clear 
 close all; 
 
-grain = 201; 
+grain = 201; % Resolution of parameters 
 PM.PF = @PAL_Gumbel;
 
 %Stimulus values the method can select from
-PM.stimRange = (linspace(PM.PF([0 1 0 0],.1,'inverse'),PM.PF([0 1 0 0],.9999,'inverse'),21));
-
+PM.stimRange = (linspace(PM.PF([0 1 0 0],.1,'inverse'),PM.PF([0 1 0 0],.9999,'inverse'),21)); % Inverse gives stimuli intensitet. x values is probability
 %Define parameter ranges to be included in posterior
-priorAlphaRange = linspace(PM.PF([0 1 0 0],.1,'inverse'),PM.PF([0 1 0 0],.9999,'inverse'),grain);
+priorAlphaRange = linspace(PM.PF([0 1 0 0],.1,'inverse'),PM.PF([0 1 0 0],.9999,'inverse'),grain); 
 priorBetaRange =  linspace(log10(.0625),log10(16),grain); %OBS. Stated in Log!
 priorGammaRange = 0.5;  
 priorLambdaRange = .02; 
@@ -19,7 +18,7 @@ gammaEQlambda = 0; % Indicate fixed value.
 [PM.priorAlphas, PM.priorBetas, PM.priorGammas, PM.priorLambdas] = ndgrid(priorAlphaRange,priorBetaRange,priorGammaRange,priorLambdaRange);
 
 %parameter to simulate observer
-paramsGen = [0, 1, .5, .02]; 
+paramsGen = [0, 1, .5, .02];
 
 %PDF
     % "First, a prior probability distribution p0(lambda) for the 
@@ -47,13 +46,13 @@ paramsGen = [0, 1, .5, .02];
     NumTrials = 100;
 
      %TEST: 
-%     PMtest = PAL_AMPM_setupPM('priorAlphaRange',priorAlphaRange,...
-%                   'priorBetaRange',priorBetaRange,...
-%                   'priorGammaRange',priorGammaRange,...
-%                   'priorLambdaRange',priorLambdaRange,...
-%                   'numtrials',NumTrials,...
-%                   'PF' , PM.PF,...
-%                   'stimRange',PM.stimRange);  
+    PMtest = PAL_AMPM_setupPM('priorAlphaRange',priorAlphaRange,...
+                  'priorBetaRange',priorBetaRange,...
+                  'priorGammaRange',priorGammaRange,...
+                  'priorLambdaRange',priorLambdaRange,...
+                  'numtrials',NumTrials,...
+                  'PF' , PM.PF,...
+                  'stimRange',PM.stimRange);  
     
     clear priorAlphaRange priorGammaRange priorBetaRange priorLambdaRange
     clear a b g L sLevel 
@@ -85,7 +84,8 @@ while length(PM.x) < NumTrials
 
     %update PM based on response
     PM = UpdateFunc(PM, response); 
-    % Test --> PMtest = PAL_AMPM_updatePM(PMtest,response);
+    % Test --> 
+    PMtest = PAL_AMPM_updatePM(PMtest,response);
     
     % plot? 
     if (doPlot) 
@@ -113,10 +113,10 @@ PM.threshold(end)
 disp('Slope estimate - homemade :')
 10.^PM.slope(end)           %PM.slope is in log10 units of beta parameter
 
-% Test :
-% disp('Threshold estimate - palamedes:')
-% PMtest.threshold(end)
-% 
-% disp('Slope estimate - palamedes:')
-% 10.^PMtest.slope(end)           %PM.slope is in log10 units of beta parameter
+%Test :
+disp('Threshold estimate - palamedes:')
+PMtest.threshold(end)
+
+disp('Slope estimate - palamedes:')
+10.^PMtest.slope(end)           %PM.slope is in log10 units of beta parameter
 
