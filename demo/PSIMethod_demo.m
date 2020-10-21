@@ -140,8 +140,6 @@ while length(PM.x) <= NumTrials
                 plot(PM.x(i),responses(i),'ok','linewidth',dotSize);
             end 
         end 
-        
-        pause(0.1)
         drawnow
     end
 end
