@@ -4,22 +4,24 @@ clc
 clear 
 close all; 
 
-grain = 201; 
-PM.PF = @PAL_Gumbel;
-
-%Stimulus values the method can select from
-PM.stimRange = (linspace(PM.PF([0 1 0 0],.1,'inverse'),PM.PF([0 1 0 0],.9999,'inverse'),21));
-
-%Define parameter ranges to be included in posterior
-priorAlphaRange = linspace(PM.PF([0 1 0 0],.1,'inverse'),PM.PF([0 1 0 0],.9999,'inverse'),grain);
-priorBetaRange =  linspace(log10(.0625),log10(5),grain); %OBS. Stated in Log!
-priorGammaRange = 0.5;  
-priorLambdaRange = .02; 
-gammaEQlambda = 0; % Indicate fixed value.
-[PM.priorAlphas, PM.priorBetas, PM.priorGammas, PM.priorLambdas] = ndgrid(priorAlphaRange,priorBetaRange,priorGammaRange,priorLambdaRange);
+NumTrials = 100;
+grain     = 50; 
+PM.PF = @LogisticFunc;
+StimulationResolution = 50; 
 
 %parameter to simulate observer
-paramsGen = [0, 1, .5, .02]; 
+paramsGen = [10, 2, .02, .02]; 
+
+%Stimulus values the method can select from
+PM.stimRange = (linspace(PM.PF([paramsGen(1) paramsGen(2) 0 0],.1,'inverse'),PM.PF([paramsGen(1) paramsGen(2) 0 0],.9999,'inverse'),StimulationResolution));
+
+%Define parameter ranges to be included in posterior
+priorAlphaRange = linspace(PM.PF([paramsGen(1) paramsGen(2) 0 0],.1,'inverse'),PM.PF([paramsGen(1) paramsGen(2) 0 0],.9999,'inverse'),grain);
+priorBetaRange =  linspace(log10(.0625),log10(5),grain); %OBS. Stated in Log!
+priorGammaRange = .02;  
+priorLambdaRange = .02; 
+
+[PM.priorAlphas, PM.priorBetas, PM.priorGammas, PM.priorLambdas] = ndgrid(priorAlphaRange,priorBetaRange,priorGammaRange,priorLambdaRange);
 
 %PDF
     % "First, a prior probability distribution p0(lambda) for the 
@@ -44,7 +46,6 @@ paramsGen = [0, 1, .5, .02];
         end 
     end
     
-    NumTrials = 100;
 
      %TEST: 
 %     PMtest = PAL_AMPM_setupPM('priorAlphaRange',priorAlphaRange,...
@@ -56,6 +57,7 @@ paramsGen = [0, 1, .5, .02];
 %                   'stimRange',PM.stimRange);  
     
     clear a b g L sLevel 
+    clear grain StimulationResolution prior 
     
     doPlot = input('Do not plot (0), plot threshold (1)?: ');
 
@@ -69,7 +71,7 @@ paramsGen = [0, 1, .5, .02];
     PM.xCurrent = PM.stimRange(newIntensityIndexPosition);
     PM.x(1) = PM.xCurrent;
 
-    clear newIntensityIndexPosition minEntropy
+    clear newIntensityIndexPosition 
     
     if (doPlot) 
         figure(1) 
@@ -80,26 +82,25 @@ paramsGen = [0, 1, .5, .02];
         ylabel('threshold estimation')
 
         figure(2) 
-        [X,Y] = meshgrid(priorAlphaRange, 10.^priorBetaRange);
+        [X,Y] = meshgrid(priorAlphaRange, priorBetaRange);
         set(gcf, 'Position',  [1100, 580, 800, 400])
         
         figure(3) 
         [X,Y] = meshgrid(priorAlphaRange, 10.^priorBetaRange);
+        StimLevelsFine = [min(PM.stimRange):(max(PM.stimRange) - min(PM.stimRange))./1000:max(PM.stimRange)];
+        Fit_correct = PM.PF(paramsGen, StimLevelsFine); 
         set(gcf, 'Position',  [1100, 50, 800, 400])
     end 
                   
 %% Simulate data and update method (PSI METHODE 3/3) 
 
-
-while length(PM.x) < NumTrials
-    disp('new response') 
-    PM.PF(paramsGen, PM.xCurrent)
-    response = rand(1) < PM.PF(paramsGen, PM.xCurrent)    %simulate observer
-    
+while length(PM.x) <= NumTrials
+    response = rand(1) < PM.PF(paramsGen, PM.xCurrent);    %simulate observer
     
     %update PM based on response
     PM = UpdateFunc(PM, response); 
     % Test --> PMtest = PAL_AMPM_updatePM(PMtest,response);
+    responses(length(PM.x)-1) = response; 
     
     % plot? 
     if (doPlot) 
@@ -109,29 +110,39 @@ while length(PM.x) < NumTrials
           
         figure(1) 
         hold on; 
-        if ~response 
+        if response 
             plot(length(PM.x),PM.x(end),'ok','MarkerFaceColor','k');
         else 
             plot(length(PM.x),PM.x(end),'ok');
         end
         
         figure(2) 
-        contour(X,Y, PM.pdf)        
+        contour(X,Y, flip(flip(PM.pdf),2))        
         xlabel('threshold')
         ylabel('slope')
         title('Probability density function (PDF)')
         grid on; 
-        
-        %pause(0.1)
-        drawnow
-        
+               
         figure(3) 
-        StimLevelsFine = [min(PM.stimRange):(max(PM.stimRange) - min(PM.stimRange))./1000:max(PM.stimRange)];
-        Fit = PM.PF([PM.threshold(end), PM.slope(end), PM.guess(end), PM.lapse(end)], StimLevelsFine);
+        Fit = PM.PF([PM.threshold(end), 10.^PM.slope(end), 0.02, 0.02], StimLevelsFine);
+        clf
+        hold on; 
+        plot(StimLevelsFine,Fit_correct,'k-','linewidth',2);
         plot(StimLevelsFine,Fit,'g-','linewidth',2);
         title('Psychophysical Function')
 
-
+        for i = 2:length(responses)
+            if responses(i) 
+                dotSize = sum(PM.x(i) == PM.x(i:-1:1) & responses(i) == responses(i:-1:1));                                          
+                plot(PM.x(i),responses(i),'ok','MarkerFaceColor','k', 'linewidth',dotSize);
+            else
+                dotSize = sum(PM.x(i) == PM.x(i:-1:1) & responses(i) == responses(i:-1:1));                                          
+                plot(PM.x(i),responses(i),'ok','linewidth',dotSize);
+            end 
+        end 
+        
+        pause(0.1)
+        drawnow
     end
 end
  
