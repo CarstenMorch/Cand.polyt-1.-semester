@@ -4,7 +4,14 @@ clear
 close all; 
 
 NumTrials = 30;
-NumTrials2 = 30;
+NumTrials2 = 60;
+NumTrials3 = 90;
+NumTrials4 = 120;
+NumTrials5 = 150;
+NumTrials6 = 180;
+
+habituationsConstant = 0.02;
+
 grain     = 50; 
 PM.PF = @LogisticFunc;
 StimulationResolution = 50; 
@@ -75,7 +82,12 @@ priorLambdaRange = .02;
     
     if (doPlot) 
         figure(1) 
-        xlim([1 NumTrials])
+        plot([NumTrials NumTrials], [min(PM.stimRange) max(PM.stimRange)],'r')
+        hold on
+        plot([NumTrials2 NumTrials2], [min(PM.stimRange) max(PM.stimRange)],'r')       
+        hold on
+        plot([NumTrials3 NumTrials3], [min(PM.stimRange) max(PM.stimRange)],'r')
+        xlim([1 NumTrials6])
         ylim([min(PM.stimRange) max(PM.stimRange)])
         xlabel('Trial number') 
         ylabel('threshold estimation')
@@ -92,9 +104,10 @@ priorLambdaRange = .02;
                   
 %% Simulate data and update method (PSI METHODE 3/3) 
 
+
 while length(PM.x) <= NumTrials
     % Simulate habituation with 0.05
-    response = rand(1) < PM.PF([10 + 0.05.*length(PM.x), 2, .02, .02], PM.xCurrent);    %simulate observer
+    response = rand(1) < PM.PF([10 + habituationsConstant.*length(PM.x), 2, .02, .02], PM.xCurrent);    %simulate observer
     
     %update PM based on response
     PM = UpdateFunc(PM, response); 
@@ -115,6 +128,7 @@ while length(PM.x) <= NumTrials
             plot(length(PM.x),PM.x(end),'ok');
         end
         
+       
         figure(2) 
         contour(X,Y, flip(flip(PM.pdf),2))        
         xlabel('threshold')
@@ -144,12 +158,13 @@ while length(PM.x) <= NumTrials
 end
 
 disp('finish first trail')
-disp('Threshold estimate:')
-PM.threshold(end)
+disp('Threshold estimate first trial:')
+threshold1 = PM.threshold(end)
 
 disp('Slope estimate :')
 10.^PM.slope(end)           %PM.slope is in log10 units of beta parameter
 
+%% Estimates threshold and slope for second trial
 clear PM.x
 PM.pdf = prior;
 [PM.PosteriorNextTrailSuccess,PM.PosteriorNextTrialFailure,PM.pSuccessGivenx] = PosteriorNextTrailFunc(PM.pdf, PM.LUT);
@@ -160,11 +175,10 @@ PM.xCurrent = PM.stimRange(newIntensityIndexPosition);
 PM.x(1) = PM.xCurrent;
 
 
-for i=1:30 length(PM.x) <= NumTrials2
-    
-    disp('kagemix')
+for i=NumTrials:NumTrials2
+ 
     % Simulate habituation with 0.05
-    response = rand(1) < PM.PF([10 + 0.05.*(length(PM.x)), 2, .02, .02], PM.xCurrent);    %simulate observer
+    response = rand(1) < PM.PF([10 + habituationsConstant.*(length(PM.x)), 2, .02, .02], PM.xCurrent);    %simulate observer
     
     %update PM based on response
     PM = UpdateFunc(PM, response); 
@@ -175,7 +189,7 @@ for i=1:30 length(PM.x) <= NumTrials2
     if (doPlot) 
         figure(1) 
         hold on; 
-        plot(PM.threshold, 'b')
+        plot([NumTrials+1:length(PM.x)-1],PM.threshold(NumTrials+1:end), 'b')
           
         figure(1) 
         hold on; 
@@ -215,11 +229,297 @@ end
 
 disp('finish trial 2 ')
 disp('Threshold estimate:')
-PM.threshold(end)
+threshold2 = PM.threshold(end)
 
-disp('Slope estimate :')
+disp('Slope estimate trial 2 :')
 10.^PM.slope(end)           %PM.slope is in log10 units of beta parameter
 
+%% Estimate threshold and slope for third trial
+PM.pdf = prior;
+[PM.PosteriorNextTrailSuccess,PM.PosteriorNextTrialFailure,PM.pSuccessGivenx] = PosteriorNextTrailFunc(PM.pdf, PM.LUT);
+% Step 3 to 5 
+[~, newIntensityIndexPosition] = EntropyFunc(PM.PosteriorNextTrailSuccess,PM.PosteriorNextTrialFailure, PM.pSuccessGivenx);
+% next stimulation intensity
+PM.xCurrent = PM.stimRange(newIntensityIndexPosition);
+PM.x(1) = PM.xCurrent;
+
+
+for i=NumTrials2:NumTrials3
+ 
+    % Simulate habituation with 0.05
+    response = rand(1) < PM.PF([10 + habituationsConstant.*(length(PM.x)), 2, .02, .02], PM.xCurrent);    %simulate observer
+    
+    %update PM based on response
+    PM = UpdateFunc(PM, response); 
+    % Test --> PMtest = PAL_AMPM_updatePM(PMtest,response);
+    responses(length(PM.x)-1) = response; 
+    
+    % plot? 
+    if (doPlot) 
+        figure(1) 
+        hold on; 
+        plot([NumTrials2+1:length(PM.x)-1],PM.threshold(NumTrials2+1:end), 'b')
+        %plot(PM.threshold, 'b')
+          
+        figure(1) 
+        hold on; 
+        if response 
+            plot(length(PM.x),PM.x(end),'ok','MarkerFaceColor','k');
+        else 
+            plot(length(PM.x),PM.x(end),'ok');
+        end
+        
+        figure(2) 
+        contour(X,Y, flip(flip(PM.pdf),2))        
+        xlabel('threshold')
+        ylabel('slope')
+        title('Probability density function (PDF)')
+        grid on; 
+               
+        figure(3) 
+        Fit = PM.PF([PM.threshold(end), 10.^PM.slope(end), 0.02, 0.02], StimLevelsFine);
+        clf
+        hold on; 
+        plot(StimLevelsFine,Fit_correct,'k-','linewidth',2);
+        plot(StimLevelsFine,Fit,'g-','linewidth',2);
+        title('Psychophysical Function')
+
+        for i = 2:length(responses)
+            if responses(i) 
+                dotSize = sum(PM.x(i) == PM.x(i:-1:1) & responses(i) == responses(i:-1:1));                                          
+                plot(PM.x(i),responses(i),'ok','MarkerFaceColor','k', 'linewidth',dotSize);
+            else
+                dotSize = sum(PM.x(i) == PM.x(i:-1:1) & responses(i) == responses(i:-1:1));                                          
+                plot(PM.x(i),responses(i),'ok','linewidth',dotSize);
+            end 
+        end 
+        drawnow
+    end
+end
+
+disp('finish trial 3 ')
+disp('Threshold estimate:')
+threshold3 = PM.threshold(end)
+
+disp('Slope estimate trial 3:')
+10.^PM.slope(end)           %PM.slope is in log10 units of beta parameter
+
+%% Estimate threshold and slope for fourth trial
+PM.pdf = prior;
+[PM.PosteriorNextTrailSuccess,PM.PosteriorNextTrialFailure,PM.pSuccessGivenx] = PosteriorNextTrailFunc(PM.pdf, PM.LUT);
+% Step 3 to 5 
+[~, newIntensityIndexPosition] = EntropyFunc(PM.PosteriorNextTrailSuccess,PM.PosteriorNextTrialFailure, PM.pSuccessGivenx);
+% next stimulation intensity
+PM.xCurrent = PM.stimRange(newIntensityIndexPosition);
+PM.x(1) = PM.xCurrent;
+
+
+for i=NumTrials3:NumTrials4
+ 
+    % Simulate habituation with 0.05
+    response = rand(1) < PM.PF([10 + habituationsConstant.*(length(PM.x)), 2, .02, .02], PM.xCurrent);    %simulate observer
+    
+    %update PM based on response
+    PM = UpdateFunc(PM, response); 
+    % Test --> PMtest = PAL_AMPM_updatePM(PMtest,response);
+    responses(length(PM.x)-1) = response; 
+    
+    % plot? 
+    if (doPlot) 
+        figure(1) 
+        hold on; 
+        plot([NumTrials3+1:length(PM.x)-1],PM.threshold(NumTrials3+1:end), 'b')
+        %plot(PM.threshold, 'b')
+          
+        figure(1) 
+        hold on; 
+        if response 
+            plot(length(PM.x),PM.x(end),'ok','MarkerFaceColor','k');
+        else 
+            plot(length(PM.x),PM.x(end),'ok');
+        end
+        
+        figure(2) 
+        contour(X,Y, flip(flip(PM.pdf),2))        
+        xlabel('threshold')
+        ylabel('slope')
+        title('Probability density function (PDF)')
+        grid on; 
+               
+        figure(3) 
+        Fit = PM.PF([PM.threshold(end), 10.^PM.slope(end), 0.02, 0.02], StimLevelsFine);
+        clf
+        hold on; 
+        plot(StimLevelsFine,Fit_correct,'k-','linewidth',2);
+        plot(StimLevelsFine,Fit,'g-','linewidth',2);
+        title('Psychophysical Function')
+
+        for i = 2:length(responses)
+            if responses(i) 
+                dotSize = sum(PM.x(i) == PM.x(i:-1:1) & responses(i) == responses(i:-1:1));                                          
+                plot(PM.x(i),responses(i),'ok','MarkerFaceColor','k', 'linewidth',dotSize);
+            else
+                dotSize = sum(PM.x(i) == PM.x(i:-1:1) & responses(i) == responses(i:-1:1));                                          
+                plot(PM.x(i),responses(i),'ok','linewidth',dotSize);
+            end 
+        end 
+        drawnow
+    end
+end
+
+disp('finish trial 4 ')
+disp('Threshold estimate:')
+threshold4 = PM.threshold(end)
+
+disp('Slope estimate trial 4:')
+10.^PM.slope(end)           %PM.slope is in log10 units of beta parameter
+
+%% Estimate threshold and slope for fifth trial
+PM.pdf = prior;
+[PM.PosteriorNextTrailSuccess,PM.PosteriorNextTrialFailure,PM.pSuccessGivenx] = PosteriorNextTrailFunc(PM.pdf, PM.LUT);
+% Step 3 to 5 
+[~, newIntensityIndexPosition] = EntropyFunc(PM.PosteriorNextTrailSuccess,PM.PosteriorNextTrialFailure, PM.pSuccessGivenx);
+% next stimulation intensity
+PM.xCurrent = PM.stimRange(newIntensityIndexPosition);
+PM.x(1) = PM.xCurrent;
+
+
+for i=NumTrials4:NumTrials5
+ 
+    % Simulate habituation with 0.05
+    response = rand(1) < PM.PF([10 + habituationsConstant.*(length(PM.x)), 2, .02, .02], PM.xCurrent);    %simulate observer
+    
+    %update PM based on response
+    PM = UpdateFunc(PM, response); 
+    % Test --> PMtest = PAL_AMPM_updatePM(PMtest,response);
+    responses(length(PM.x)-1) = response; 
+    
+    % plot? 
+    if (doPlot) 
+        figure(1) 
+        hold on; 
+        plot([NumTrials4+1:length(PM.x)-1],PM.threshold(NumTrials4+1:end), 'b')
+        %plot(PM.threshold, 'b')
+          
+        figure(1) 
+        hold on; 
+        if response 
+            plot(length(PM.x),PM.x(end),'ok','MarkerFaceColor','k');
+        else 
+            plot(length(PM.x),PM.x(end),'ok');
+        end
+        
+        figure(2) 
+        contour(X,Y, flip(flip(PM.pdf),2))        
+        xlabel('threshold')
+        ylabel('slope')
+        title('Probability density function (PDF)')
+        grid on; 
+               
+        figure(3) 
+        Fit = PM.PF([PM.threshold(end), 10.^PM.slope(end), 0.02, 0.02], StimLevelsFine);
+        clf
+        hold on; 
+        plot(StimLevelsFine,Fit_correct,'k-','linewidth',2);
+        plot(StimLevelsFine,Fit,'g-','linewidth',2);
+        title('Psychophysical Function')
+
+        for i = 2:length(responses)
+            if responses(i) 
+                dotSize = sum(PM.x(i) == PM.x(i:-1:1) & responses(i) == responses(i:-1:1));                                          
+                plot(PM.x(i),responses(i),'ok','MarkerFaceColor','k', 'linewidth',dotSize);
+            else
+                dotSize = sum(PM.x(i) == PM.x(i:-1:1) & responses(i) == responses(i:-1:1));                                          
+                plot(PM.x(i),responses(i),'ok','linewidth',dotSize);
+            end 
+        end 
+        drawnow
+    end
+end
+
+disp('finish trial 5 ')
+disp('Threshold estimate:')
+threshold5 = PM.threshold(end)
+
+disp('Slope estimate trial 5:')
+10.^PM.slope(end)           %PM.slope is in log10 units of beta parameter
+
+%% Estimate threshold and slope for six trial
+PM.pdf = prior;
+[PM.PosteriorNextTrailSuccess,PM.PosteriorNextTrialFailure,PM.pSuccessGivenx] = PosteriorNextTrailFunc(PM.pdf, PM.LUT);
+% Step 3 to 5 
+[~, newIntensityIndexPosition] = EntropyFunc(PM.PosteriorNextTrailSuccess,PM.PosteriorNextTrialFailure, PM.pSuccessGivenx);
+% next stimulation intensity
+PM.xCurrent = PM.stimRange(newIntensityIndexPosition);
+PM.x(1) = PM.xCurrent;
+
+
+for i=NumTrials5:NumTrials6
+ 
+    % Simulate habituation with 0.05
+    response = rand(1) < PM.PF([10 + habituationsConstant.*(length(PM.x)), 2, .02, .02], PM.xCurrent);    %simulate observer
+    
+    %update PM based on response
+    PM = UpdateFunc(PM, response); 
+    % Test --> PMtest = PAL_AMPM_updatePM(PMtest,response);
+    responses(length(PM.x)-1) = response; 
+    
+    % plot? 
+    if (doPlot) 
+        figure(1) 
+        hold on; 
+        plot([NumTrials5+1:length(PM.x)-1],PM.threshold(NumTrials5+1:end), 'b')
+        %plot(PM.threshold, 'b')
+          
+        figure(1) 
+        hold on; 
+        if response 
+            plot(length(PM.x),PM.x(end),'ok','MarkerFaceColor','k');
+        else 
+            plot(length(PM.x),PM.x(end),'ok');
+        end
+        
+        figure(2) 
+        contour(X,Y, flip(flip(PM.pdf),2))        
+        xlabel('threshold')
+        ylabel('slope')
+        title('Probability density function (PDF)')
+        grid on; 
+               
+        figure(3) 
+        Fit = PM.PF([PM.threshold(end), 10.^PM.slope(end), 0.02, 0.02], StimLevelsFine);
+        clf
+        hold on; 
+        plot(StimLevelsFine,Fit_correct,'k-','linewidth',2);
+        plot(StimLevelsFine,Fit,'g-','linewidth',2);
+        title('Psychophysical Function')
+
+        for i = 2:length(responses)
+            if responses(i) 
+                dotSize = sum(PM.x(i) == PM.x(i:-1:1) & responses(i) == responses(i:-1:1));                                          
+                plot(PM.x(i),responses(i),'ok','MarkerFaceColor','k', 'linewidth',dotSize);
+            else
+                dotSize = sum(PM.x(i) == PM.x(i:-1:1) & responses(i) == responses(i:-1:1));                                          
+                plot(PM.x(i),responses(i),'ok','linewidth',dotSize);
+            end 
+        end 
+        drawnow
+    end
+end
+
+disp('finish trial 6 ')
+disp('Threshold estimate:')
+threshold6 = PM.threshold(end)
+
+disp('Slope estimate trial 6:')
+10.^PM.slope(end)           %PM.slope is in log10 units of beta parameter
+
+threshold = [threshold1;threshold2;threshold3;threshold4;threshold5;threshold6]
+
+plot(threshold,'o')
+xlabel('Trial number');
+ylabel('Threshold value');
+title 
 % Test :
 % disp('Threshold estimate - palamedes:')
 % PMtest.threshold(end)
