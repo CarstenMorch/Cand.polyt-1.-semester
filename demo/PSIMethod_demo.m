@@ -8,8 +8,8 @@ disp('Demo shows PSI method')
 disp('Simulated data habituate between stimulation with 0.1% factor')
 disp('Habituation continuous between trials'); 
 
-NumStimulation = 50;
-NumTrials = 4; 
+NumStimulation = 30;
+NumTrials = 6; 
 grain     = 50; 
 PM.PF = @LogisticFunc;
 StimulationResolution = 50; 
@@ -21,7 +21,7 @@ paramsGen = [10, 2, .02, .02];
 PM.stimRange = (linspace(PM.PF([paramsGen(1) paramsGen(2) 0 0],.01,'inverse'),PM.PF([paramsGen(1) paramsGen(2) 0 0],.99,'inverse'),StimulationResolution));
 
 %Define parameter ranges to be included in posterior
-priorAlphaRange = linspace(PM.PF([paramsGen(1) paramsGen(2) 0 0],.1,'inverse'),PM.PF([paramsGen(1) paramsGen(2) 0 0],.9999,'inverse'),grain);
+priorAlphaRange = linspace(PM.PF([paramsGen(1) paramsGen(2) 0 0],.01,'inverse'),PM.PF([paramsGen(1) paramsGen(2) 0 0],.99,'inverse'),grain);
 priorBetaRange =  linspace(log10(.0625),log10(5),grain); %OBS. Stated in Log!
 priorGammaRange = .02;  
 priorLambdaRange = .02; 
@@ -162,6 +162,6 @@ for CurrentTrialNum = 1:NumTrials
             end
         end
     end
-    fprintf('Finish trial %4.0f . Threshold estimate %4.4f \n', CurrentTrialNum, PM.threshold(end))
+    fprintf('Finish trial %2.0f. Threshold estimate %4.2f. Threshold at start and final state %4.2f : %4.2f \n', CurrentTrialNum, PM.threshold(end),paramsGen(1)*1.001^(1+move),paramsGen(1)*1.001^(length(PM.x)+move))
 end 
 
