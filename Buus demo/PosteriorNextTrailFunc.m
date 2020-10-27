@@ -1,9 +1,9 @@
 %
-%PosteriorNextTrailFunc   Post dist
+%PosteriorNextTrialFunc   Post dist
 %   copy of PAL_AMPM_PosteriorTplus1 
 %
 
-function [PosteriorNextTrailSuccess,PosteriorNextTrialFailure,pSuccessGivenx] = PosteriorNextTrailFunc(pdf,LUT)
+function [PosteriorNextTrialSuccess,PosteriorNextTrialFailure,pSuccessGivenx] = PosteriorNextTrialFunc(pdf,LUT)
     % obs: LUT = p(r|lambda,x)
    
 % Step 1: 
@@ -14,11 +14,11 @@ function [PosteriorNextTrailSuccess,PosteriorNextTrialFailure,pSuccessGivenx] = 
     pdf5D = repmat(pdf, [1 1 1 1 size(LUT,5)]); % 201 201 --> 201 201 1 1 21 
     
     % pt(λ)p(r|λ,x):
-    PosteriorNextTrailSuccess = pdf5D.*LUT; % size[201 201 1 1 21] 
-    PosteriorNextTrialFailure = pdf5D-PosteriorNextTrailSuccess;
+    PosteriorNextTrialSuccess = pdf5D.*LUT; % size[201 201 1 1 21] 
+    PosteriorNextTrialFailure = pdf5D-PosteriorNextTrialSuccess;
     
-    % p(succes|x) = sum of λ ( p(succes|λ,x)*pt(λ) ): 
-    DenominatorS = squeeze(sum(sum(sum(sum(PosteriorNextTrailSuccess,1),2),3),4)); %the probability of stimulus in relation to all parameters, return the 1,1,1,1,21 --> 21,1
+    % p(success|x) = sum of λ ( p(success|λ,x)*pt(λ) ): 
+    DenominatorS = squeeze(sum(sum(sum(sum(PosteriorNextTrialSuccess,1),2),3),4)); %the probability of stimulus in relation to all parameters, return the 1,1,1,1,21 --> 21,1
     DenominatorS = repmat(DenominatorS, [1 size(pdf5D,1) size(pdf5D,2) size(pdf5D,3) size(pdf5D,4)]); %[21,1] --> [21, 201, 201]    
     DenominatorS = permute(DenominatorS, [2 3 4 5 1]); %[21, 201, 201] --> [201 201 1 1 21]
       
@@ -36,7 +36,7 @@ function [PosteriorNextTrailSuccess,PosteriorNextTrialFailure,pSuccessGivenx] = 
     % beta values at intensity x.
     
     % p_t (λ|x,r): 
-    PosteriorNextTrailSuccess = PosteriorNextTrailSuccess./DenominatorS; 
+    PosteriorNextTrialSuccess = PosteriorNextTrialSuccess./DenominatorS; 
     PosteriorNextTrialFailure = PosteriorNextTrialFailure./DenominatorF;
     
     % Needed in step 4

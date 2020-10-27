@@ -22,12 +22,13 @@
 %latest edited: 
 %   06-10-2020
 
-function y = LogisticFunc(parameter,x)
+function y = LogisticFunc(parameter,x,varargin)
 
 gamma = 0;
 lambda = 0;
 alpha = parameter(1);
 beta = parameter(2);
+
 if length(parameter) > 2
     gamma = parameter(3);
     if length(parameter) > 3
@@ -35,7 +36,12 @@ if length(parameter) > 2
     end
 end
 
-y = gamma + (1 - gamma - lambda).*(1./(1+exp(-1*(beta).*(x-alpha))));
-
+if ~isempty(varargin)
+    c = (x - gamma)./(1 - gamma - lambda);
+    c = (1 - c)./c;
+    y = alpha - log(c)./beta;   
+else 
+    y = gamma + (1 - gamma - lambda).*(1./(1+exp(-1*(beta).*(x-alpha))));
+end
 
 
