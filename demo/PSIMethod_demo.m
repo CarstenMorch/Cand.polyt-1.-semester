@@ -64,6 +64,7 @@ priorLambdaRange = .02;
     clear a b g L sLevel 
     clear grain StimulationResolution  
     
+    disp('OBS! with contour plot, the trial nr is reset to zero '); 
     doPlot = input('Do not plot (0), plot threshold (1), plot threshold PF and contour(2) ?: ');
 
     
@@ -85,6 +86,8 @@ priorLambdaRange = .02;
         ylabel('Stimulus intensity')
         
         if(doPlot == 2)
+            NumTrials = 1; 
+
             figure(2) 
             [X,Y] = meshgrid(priorAlphaRange, priorBetaRange);
             %set(gcf, 'Position',  [1100, 580, 800, 400])
@@ -150,7 +153,7 @@ for CurrentTrialNum = 1:NumTrials
                 plot(StimLevelsFine,Fit,'g-','linewidth',2);
                 title('Psychophysical Function')
 
-                for i = 2:length(CurrentTrialNum)
+                for i = 2:length(responses)
                     if responses(i) 
                         dotSize = sum(PM.x(i) == PM.x(i:-1:1) & responses(i) == responses(i:-1:1));                                          
                         plot(PM.x(i),responses(i),'ok','MarkerFaceColor','k', 'linewidth',dotSize);
