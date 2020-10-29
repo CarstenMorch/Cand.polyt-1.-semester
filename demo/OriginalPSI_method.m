@@ -111,7 +111,7 @@ for CurrentTrialNum = 1:NumTrials
     move = NumStimulation*(CurrentTrialNum-1);          
 
     while length(PM.x) <= NumStimulation
-        response = rand(1) < PM.PF([paramsGen(1)*1.001^(length(PM.x)+move) paramsGen(2) paramsGen(3) paramsGen(4)], PM.xCurrent);    %simulate observer
+        response = rand(1) < PM.PF([paramsGen(1) paramsGen(2) paramsGen(3) paramsGen(4)], PM.xCurrent);    %simulate observer
 
         %update PM based on response
         PM = UpdateFunc(PM, response); 
