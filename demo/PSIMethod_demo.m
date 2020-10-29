@@ -8,14 +8,14 @@ disp('Demo shows PSI method')
 disp('Simulated data habituate between stimulation with 0.1% factor')
 disp('Habituation continuous between trials'); 
 
-NumStimulation = 30;
+NumStimulation = 50;
 NumTrials = 6; 
 grain     = 50; 
 PM.PF = @LogisticFunc;
 StimulationResolution = 50; 
 
 %parameter to simulate observer
-paramsGen = [10, 2, .02, .02]; 
+paramsGen = [10, 1, .02, .02]; 
 
 %Stimulus values the method can select from
 PM.stimRange = (linspace(PM.PF([paramsGen(1) paramsGen(2) 0 0],.01,'inverse'),PM.PF([paramsGen(1) paramsGen(2) 0 0],.99,'inverse'),StimulationResolution));
@@ -124,6 +124,7 @@ for CurrentTrialNum = 1:NumTrials
             figure(1) 
             hold on;        
             plot( 1+move:length(PM.x)-1+move, PM.threshold, 'b')
+            plot(length(PM.x)-1+move, paramsGen(1)*1.001^(length(PM.x)+move), '.', 'color','#B1B1B1', 'linewidth',0.1)
             
             figure(1) 
             hold on; 
@@ -149,7 +150,7 @@ for CurrentTrialNum = 1:NumTrials
                 plot(StimLevelsFine,Fit,'g-','linewidth',2);
                 title('Psychophysical Function')
 
-                for i = 2:length(responses)
+                for i = 2:length(CurrentTrialNum)
                     if responses(i) 
                         dotSize = sum(PM.x(i) == PM.x(i:-1:1) & responses(i) == responses(i:-1:1));                                          
                         plot(PM.x(i),responses(i),'ok','MarkerFaceColor','k', 'linewidth',dotSize);
