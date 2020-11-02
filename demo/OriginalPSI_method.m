@@ -7,8 +7,8 @@ disp('Demo shows PSI method')
 disp('Simulated data habituate between stimulation with 0.1% factor')
 disp('Habituation continuous between trials'); 
 
-NumStimulation = 100;
-NumTrials = 1; 
+NumStimulation = 30;
+NumTrials = 6; 
 grain     = 50; 
 PM.PF = @LogisticFunc;
 StimulationResolution = 50; 

@@ -8,14 +8,14 @@ disp('Demo shows PSI method')
 disp('Simulated data habituate between stimulation with 0.1% factor')
 disp('Habituation continuous between trials'); 
 
-NumStimulation = 30;
-NumTrials = 6; 
-grain     = 50; 
+NumStimulation = 100;
+NumTrials = 1; 
+grain     = 50;  % Out pdf is grain x grain = pdf = alpha x beta
 PM.PF = @LogisticFunc;
 StimulationResolution = 50; 
 
 %parameter to simulate observer
-paramsGen = [10, 2, .02, .02]; 
+paramsGen = [10, 4.4, .02, .02]; 
 
 %Stimulus values the method can select from
 PM.stimRange = (linspace(PM.PF([paramsGen(1) paramsGen(2) 0 0],.01,'inverse'),PM.PF([paramsGen(1) paramsGen(2) 0 0],.99,'inverse'),StimulationResolution));
@@ -23,6 +23,8 @@ PM.stimRange = (linspace(PM.PF([paramsGen(1) paramsGen(2) 0 0],.01,'inverse'),PM
 %Define parameter ranges to be included in posterior
 priorAlphaRange = linspace(PM.PF([paramsGen(1) paramsGen(2) 0 0],.01,'inverse'),PM.PF([paramsGen(1) paramsGen(2) 0 0],.99,'inverse'),grain);
 priorBetaRange =  linspace(log10(.0625),log10(5),grain); %OBS. Stated in Log!
+% Jenny numbers
+%priorBetaRange =  linspace(log10(11.48),log10(1.995*10^114),grain); %OBS. Stated in Log!
 priorGammaRange = .02;  
 priorLambdaRange = .02; 
 
@@ -33,7 +35,7 @@ priorLambdaRange = .02;
     % psychometric functions must be set up" [Kontsevich]
     prior = ones(length(priorAlphaRange),length(priorBetaRange),length(priorGammaRange),length(priorLambdaRange));
     prior = prior./numel(prior); 
-    PM.pdf = prior;  
+    %PM.pdf = prior;  
   
 %LOOK UP TABEL (LUT)
     % "Second, to speed up the method, a look-up table of conditional
@@ -50,16 +52,6 @@ priorLambdaRange = .02;
             end
         end 
     end
-    
-
-     %TEST: 
-%     PMtest = PAL_AMPM_setupPM('priorAlphaRange',priorAlphaRange,...
-%                   'priorBetaRange',priorBetaRange,...
-%                   'priorGammaRange',priorGammaRange,...
-%                   'priorLambdaRange',priorLambdaRange,...
-%                   'numtrials',NumTrials,...
-%                   'PF' , PM.PF,...
-%                   'stimRange',PM.stimRange);  
     
     clear a b g L sLevel 
     clear grain StimulationResolution  
@@ -101,7 +93,10 @@ priorLambdaRange = .02;
                 
 %% Simulate data and update method (PSI METHODE 3/3) 
 
+
 for CurrentTrialNum = 1:NumTrials
+    for CurrentTrialStim = 1:NumStimulation
+        
     PM.x = []; 
     PM.threshold = []; 
     PM.pdf = prior; 
@@ -162,6 +157,14 @@ for CurrentTrialNum = 1:NumTrials
             end
         end
     end
+    end 
     fprintf('Finish trial %2.0f. Threshold estimate %4.2f. Threshold at start and final state %4.2f : %4.2f \n', CurrentTrialNum, PM.threshold(end),paramsGen(1)*1.001^(1+move),paramsGen(1)*1.001^(length(PM.x)+move))
 end 
+
+% running = movmean(PM.threshold,30);
+% 
+% figure;
+% plot(running)
+% hold on
+% plot(PM.threshold)
 
