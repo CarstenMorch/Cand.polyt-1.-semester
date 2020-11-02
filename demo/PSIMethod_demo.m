@@ -15,7 +15,7 @@ PM.PF = @LogisticFunc;
 StimulationResolution = 50; 
 
 %parameter to simulate observer
-paramsGen = [10, 4.4, .02, .02]; 
+paramsGen = [10, 1, .02, .02]; 
 
 %Stimulus values the method can select from
 PM.stimRange = (linspace(PM.PF([paramsGen(1) paramsGen(2) 0 0],.01,'inverse'),PM.PF([paramsGen(1) paramsGen(2) 0 0],.99,'inverse'),StimulationResolution));
@@ -56,6 +56,7 @@ priorLambdaRange = .02;
     clear a b g L sLevel 
     clear grain StimulationResolution  
     
+    disp('OBS! with contour plot, the trial nr is reset to zero '); 
     doPlot = input('Do not plot (0), plot threshold (1), plot threshold PF and contour(2) ?: ');
 
     
@@ -77,6 +78,8 @@ priorLambdaRange = .02;
         ylabel('Stimulus intensity')
         
         if(doPlot == 2)
+            NumTrials = 1; 
+
             figure(2) 
             [X,Y] = meshgrid(priorAlphaRange, priorBetaRange);
             %set(gcf, 'Position',  [1100, 580, 800, 400])
@@ -119,6 +122,7 @@ for CurrentTrialNum = 1:NumTrials
             figure(1) 
             hold on;        
             plot( 1+move:length(PM.x)-1+move, PM.threshold, 'b')
+            plot(length(PM.x)-1+move, paramsGen(1)*1.001^(length(PM.x)+move), '.', 'color','#B1B1B1', 'linewidth',0.1)
             
             figure(1) 
             hold on; 
