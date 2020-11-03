@@ -10,12 +10,12 @@ disp('Habituation continuous between trials');
 
 NumStimulation = 100;
 NumTrials = 1; 
-grain     = 50;  % Out pdf is grain x grain = pdf = alpha x beta
+grain     = 50; 
 PM.PF = @LogisticFunc;
 StimulationResolution = 50; 
 
 %parameter to simulate observer
-paramsGen = [10, 1, .02, .02]; 
+paramsGen = [10, 1.05, .02, .02]; 
 
 %Stimulus values the method can select from
 PM.stimRange = (linspace(PM.PF([paramsGen(1) paramsGen(2) 0 0],.01,'inverse'),PM.PF([paramsGen(1) paramsGen(2) 0 0],.99,'inverse'),StimulationResolution));
@@ -23,8 +23,6 @@ PM.stimRange = (linspace(PM.PF([paramsGen(1) paramsGen(2) 0 0],.01,'inverse'),PM
 %Define parameter ranges to be included in posterior
 priorAlphaRange = linspace(PM.PF([paramsGen(1) paramsGen(2) 0 0],.01,'inverse'),PM.PF([paramsGen(1) paramsGen(2) 0 0],.99,'inverse'),grain);
 priorBetaRange =  linspace(log10(.0625),log10(5),grain); %OBS. Stated in Log!
-% Jenny numbers
-%priorBetaRange =  linspace(log10(11.48),log10(1.995*10^114),grain); %OBS. Stated in Log!
 priorGammaRange = .02;  
 priorLambdaRange = .02; 
 
@@ -35,7 +33,7 @@ priorLambdaRange = .02;
     % psychometric functions must be set up" [Kontsevich]
     prior = ones(length(priorAlphaRange),length(priorBetaRange),length(priorGammaRange),length(priorLambdaRange));
     prior = prior./numel(prior); 
-    %PM.pdf = prior;  
+    PM.pdf = prior;  
   
 %LOOK UP TABEL (LUT)
     % "Second, to speed up the method, a look-up table of conditional
@@ -53,10 +51,20 @@ priorLambdaRange = .02;
         end 
     end
     
-    clear a b g L sLevel 
-    clear grain StimulationResolution  
+
+     %TEST: 
+%     PMtest = PAL_AMPM_setupPM('priorAlphaRange',priorAlphaRange,...
+%                   'priorBetaRange',priorBetaRange,...
+%                   'priorGammaRange',priorGammaRange,...
+%                   'priorLambdaRange',priorLambdaRange,...
+%                   'numtrials',NumTrials,...
+%                   'PF' , PM.PF,...
+%                   'stimRange',PM.stimRange);  
     
-    disp('OBS! with contour plot, the trial nr is reset to zero '); 
+    clear a b g L sLevel 
+    clear StimulationResolution  
+    
+    disp('OBS. Trial is set to 1, if 2 is entered');
     doPlot = input('Do not plot (0), plot threshold (1), plot threshold PF and contour(2) ?: ');
 
     
@@ -74,12 +82,11 @@ priorLambdaRange = .02;
             plot([NumStimulation*i NumStimulation*i],[min(PM.stimRange) max(PM.stimRange)],':b')
         end 
         %set(gcf, 'Position',  [40, 3010, 1000, 600])
-        xlabel('Trial number') 
+        xlabel('Stimulation number') 
         ylabel('Stimulus intensity')
         
         if(doPlot == 2)
             NumTrials = 1; 
-
             figure(2) 
             [X,Y] = meshgrid(priorAlphaRange, priorBetaRange);
             %set(gcf, 'Position',  [1100, 580, 800, 400])
@@ -89,17 +96,14 @@ priorLambdaRange = .02;
             StimLevelsFine = [min(PM.stimRange):(max(PM.stimRange) - min(PM.stimRange))./1000:max(PM.stimRange)];
             Fit_correct = PM.PF(paramsGen, StimLevelsFine); 
             %set(gcf, 'Position',  [1100, 50, 800, 400])
-            input('start?');
+            input('Press enter to start');
         end
     end 
                   
                 
 %% Simulate data and update method (PSI METHODE 3/3) 
 
-
 for CurrentTrialNum = 1:NumTrials
-    for CurrentTrialStim = 1:NumStimulation
-        
     PM.x = []; 
     PM.threshold = []; 
     PM.pdf = prior; 
@@ -107,29 +111,31 @@ for CurrentTrialNum = 1:NumTrials
     [~, newIntensityIndexPosition] = EntropyFunc(PM.PosteriorNextTrailSuccess,PM.PosteriorNextTrialFailure, PM.pSuccessGivenx);
     PM.xCurrent = PM.stimRange(newIntensityIndexPosition);
     PM.x(1) = PM.xCurrent;
-    move = NumStimulation*(CurrentTrialNum-1);          
+    move = NumStimulation*(CurrentTrialNum-1); 
 
     while length(PM.x) <= NumStimulation
-        response = rand(1) < PM.PF([paramsGen(1)*1.001^(length(PM.x)+move) paramsGen(2) paramsGen(3) paramsGen(4)], PM.xCurrent);    %simulate observer
+        response = rand(1) < PM.PF([paramsGen(1)*1.00001^(length(PM.x)+move) paramsGen(2) paramsGen(3) paramsGen(4)], PM.xCurrent);    %simulate observer
+        fprintf('Trial %4.f. current stimulus level %4.2f. Response %1.0f \n', length(PM.x), PM.xCurrent , response)
+
+        responses(length(PM.x)) = response; 
 
         %update PM based on response
         PM = UpdateFunc(PM, response); 
         % Test --> PMtest = PAL_AMPM_updatePM(PMtest,response);
-        responses(length(PM.x)-1) = response; 
 
         % plot? 
         if (doPlot) 
             figure(1) 
             hold on;        
             plot( 1+move:length(PM.x)-1+move, PM.threshold, 'b')
-            plot(length(PM.x)-1+move, paramsGen(1)*1.001^(length(PM.x)+move), '.', 'color','#B1B1B1', 'linewidth',0.1)
+            plot(length(PM.x)-1+move, paramsGen(1)*1.00001^(length(PM.x)+move), '.', 'color','#B1B1B1', 'linewidth',0.1)
             
             figure(1) 
             hold on; 
             if response 
-                plot(length(PM.x)+move,PM.x(end),'ok','MarkerFaceColor','k');
+                plot(length(PM.x)-1+move,PM.x(end-1),'ok','MarkerFaceColor','k');
             else 
-                plot(length(PM.x)+move,PM.x(end),'ok');
+                plot(length(PM.x)-1+move,PM.x(end-1),'or');
             end
 
             if(doPlot == 2)
@@ -161,14 +167,6 @@ for CurrentTrialNum = 1:NumTrials
             end
         end
     end
-    end 
     fprintf('Finish trial %2.0f. Threshold estimate %4.2f. Threshold at start and final state %4.2f : %4.2f \n', CurrentTrialNum, PM.threshold(end),paramsGen(1)*1.001^(1+move),paramsGen(1)*1.001^(length(PM.x)+move))
 end 
-
-% running = movmean(PM.threshold,30);
-% 
-% figure;
-% plot(running)
-% hold on
-% plot(PM.threshold)
 
