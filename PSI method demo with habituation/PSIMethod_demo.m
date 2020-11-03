@@ -1,3 +1,4 @@
+
 %% Setup (PSI METHODE 1/3) 
 clc 
 clear 
@@ -7,14 +8,14 @@ disp('Demo shows PSI method')
 disp('Simulated data habituate between stimulation with 0.1% factor')
 disp('Habituation continuous between trials'); 
 
-NumStimulation = 30;
-NumTrials = 6; 
+NumStimulation = 100;
+NumTrials = 1; 
 grain     = 50; 
 PM.PF = @LogisticFunc;
 StimulationResolution = 50; 
 
 %parameter to simulate observer
-paramsGen = [10, 2, .02, .02]; 
+paramsGen = [10, 1.05, .02, .02]; 
 
 %Stimulus values the method can select from
 PM.stimRange = (linspace(PM.PF([paramsGen(1) paramsGen(2) 0 0],.01,'inverse'),PM.PF([paramsGen(1) paramsGen(2) 0 0],.99,'inverse'),StimulationResolution));
@@ -61,8 +62,9 @@ priorLambdaRange = .02;
 %                   'stimRange',PM.stimRange);  
     
     clear a b g L sLevel 
-    clear grain StimulationResolution  
+    clear StimulationResolution  
     
+    disp('OBS. Trial is set to 1, if 2 is entered');
     doPlot = input('Do not plot (0), plot threshold (1), plot threshold PF and contour(2) ?: ');
 
     
@@ -80,10 +82,11 @@ priorLambdaRange = .02;
             plot([NumStimulation*i NumStimulation*i],[min(PM.stimRange) max(PM.stimRange)],':b')
         end 
         %set(gcf, 'Position',  [40, 3010, 1000, 600])
-        xlabel('Trial number') 
+        xlabel('Stimulation number') 
         ylabel('Stimulus intensity')
         
         if(doPlot == 2)
+            NumTrials = 1; 
             figure(2) 
             [X,Y] = meshgrid(priorAlphaRange, priorBetaRange);
             %set(gcf, 'Position',  [1100, 580, 800, 400])
@@ -93,7 +96,7 @@ priorLambdaRange = .02;
             StimLevelsFine = [min(PM.stimRange):(max(PM.stimRange) - min(PM.stimRange))./1000:max(PM.stimRange)];
             Fit_correct = PM.PF(paramsGen, StimLevelsFine); 
             %set(gcf, 'Position',  [1100, 50, 800, 400])
-            input('start?');
+            input('Press enter to start');
         end
     end 
                   
@@ -108,28 +111,31 @@ for CurrentTrialNum = 1:NumTrials
     [~, newIntensityIndexPosition] = EntropyFunc(PM.PosteriorNextTrailSuccess,PM.PosteriorNextTrialFailure, PM.pSuccessGivenx);
     PM.xCurrent = PM.stimRange(newIntensityIndexPosition);
     PM.x(1) = PM.xCurrent;
-    move = NumStimulation*(CurrentTrialNum-1);          
+    move = NumStimulation*(CurrentTrialNum-1); 
 
     while length(PM.x) <= NumStimulation
-        response = rand(1) < PM.PF([paramsGen(1) paramsGen(2) paramsGen(3) paramsGen(4)], PM.xCurrent);    %simulate observer
+        response = rand(1) < PM.PF([paramsGen(1)*1.00001^(length(PM.x)+move) paramsGen(2) paramsGen(3) paramsGen(4)], PM.xCurrent);    %simulate observer
+        fprintf('Trial %4.f. current stimulus level %4.2f. Response %1.0f \n', length(PM.x), PM.xCurrent , response)
+
+        responses(length(PM.x)) = response; 
 
         %update PM based on response
         PM = UpdateFunc(PM, response); 
         % Test --> PMtest = PAL_AMPM_updatePM(PMtest,response);
-        responses(length(PM.x)-1) = response; 
 
         % plot? 
         if (doPlot) 
             figure(1) 
             hold on;        
             plot( 1+move:length(PM.x)-1+move, PM.threshold, 'b')
+            plot(length(PM.x)-1+move, paramsGen(1)*1.00001^(length(PM.x)+move), '.', 'color','#B1B1B1', 'linewidth',0.1)
             
             figure(1) 
             hold on; 
             if response 
-                plot(length(PM.x)+move,PM.x(end),'ok','MarkerFaceColor','k');
+                plot(length(PM.x)-1+move,PM.x(end-1),'ok','MarkerFaceColor','k');
             else 
-                plot(length(PM.x)+move,PM.x(end),'ok');
+                plot(length(PM.x)-1+move,PM.x(end-1),'or');
             end
 
             if(doPlot == 2)
