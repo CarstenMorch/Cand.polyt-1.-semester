@@ -173,7 +173,7 @@ for curPos = 1:(NumStimulation-windowSize)
         else 
             plot(length(PM.x)-1,PM.x(end-1),'or');
         end
-        % Consider to make mesh grid over the pdf? 
+        % Consider to make mesh grid over the 
     end
 end 
 
