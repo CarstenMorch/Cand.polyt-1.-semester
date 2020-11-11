@@ -11,11 +11,13 @@ disp('Habituation continuous between trials');
 NumStimulation = 100;
 NumTrials = 1; 
 grain     = 50; 
+coef = 1.004;
+
 PM.PF = @LogisticFunc;
 StimulationResolution = 50; 
 
 %parameter to simulate observer
-paramsGen = [10, 1.05, .02, .02]; 
+paramsGen = [5 1.05, .02, .02]; 
 
 %Stimulus values the method can select from
 PM.stimRange = (linspace(PM.PF([paramsGen(1) paramsGen(2) 0 0],.01,'inverse'),PM.PF([paramsGen(1) paramsGen(2) 0 0],.99,'inverse'),StimulationResolution));
@@ -114,9 +116,7 @@ for CurrentTrialNum = 1:NumTrials
     move = NumStimulation*(CurrentTrialNum-1); 
 
     while length(PM.x) <= NumStimulation
-        response = rand(1) < PM.PF([paramsGen(1)*1.00001^(length(PM.x)+move) paramsGen(2) paramsGen(3) paramsGen(4)], PM.xCurrent);    %simulate observer
-        fprintf('Trial %4.f. current stimulus level %4.2f. Response %1.0f \n', length(PM.x), PM.xCurrent , response)
-
+        response = rand(1) < PM.PF([paramsGen(1)*coef^(length(PM.x)) paramsGen(2) paramsGen(3) paramsGen(4)], PM.xCurrent);    %simulate observer
         responses(length(PM.x)) = response; 
 
         %update PM based on response
@@ -128,7 +128,9 @@ for CurrentTrialNum = 1:NumTrials
             figure(1) 
             hold on;        
             plot( 1+move:length(PM.x)-1+move, PM.threshold, 'b')
-            plot(length(PM.x)-1+move, paramsGen(1)*1.00001^(length(PM.x)+move), '.', 'color','#B1B1B1', 'linewidth',0.1)
+            plot(length(PM.x)-1+move, paramsGen(1)*coef^(length(PM.x)), '.', 'color','#B1B1B1', 'linewidth',0.1) % FEJL, den er forskudt med en. 
+
+             
             
             figure(1) 
             hold on; 
@@ -169,4 +171,11 @@ for CurrentTrialNum = 1:NumTrials
     end
     fprintf('Finish trial %2.0f. Threshold estimate %4.2f. Threshold at start and final state %4.2f : %4.2f \n', CurrentTrialNum, PM.threshold(end),paramsGen(1)*1.001^(1+move),paramsGen(1)*1.001^(length(PM.x)+move))
 end 
+
+s = zeros(1, length(PM.threshold)); % Preallocation
+for i = 1:length(PM.threshold)
+    s(i) = (PM.threshold(i) - paramsGen(1)*coef^i)^2;
+end 
+s = sum(s);
+fprintf('Residual %2.2f. (only works with on trial)\n',s)
 
