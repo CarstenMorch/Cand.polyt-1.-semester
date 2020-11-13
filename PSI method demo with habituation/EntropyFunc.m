@@ -3,7 +3,17 @@
 %    
 %
 
-function [minEntropy, newIntensityIndexPosition] = EntropyFunc(PosteriorNextTrailSuccess,PosteriorNextTrialFailure,pSuccessGivenx)
+function [minEntropy, newIntensityIndexPosition, Entropy] = EntropyFunc(PosteriorNextTrailSuccess,PosteriorNextTrialFailure,pSuccessGivenx, varargin)
+
+if ~isempty(varargin)
+    marginalize = sort(varargin{1},'descend'); % [4 2]
+    for dim = 1:length(marginalize)
+        PosteriorNextTrailSuccess = sum(PosteriorNextTrailSuccess,marginalize(dim));
+        PosteriorNextTrialFailure = sum(PosteriorNextTrialFailure,marginalize(dim));
+    end
+end
+
+
 
 % Step 3: 
     % "Estimate the entropy of the probability density function over the 

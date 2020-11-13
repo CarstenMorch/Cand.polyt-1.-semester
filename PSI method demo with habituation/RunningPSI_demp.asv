@@ -51,7 +51,7 @@ ylabel('Stimulus Intensity');
 uiwait(UDFig)
 disp('Program execution resumed.');
 
-%% Setup (PSI METHODE 1/3) 
+% Setup (PSI METHODE 1/3) 
 
 % disp('Demo shows PSI method')
 % disp('Simulated data habituate between stimulation with 0.1% factor')
@@ -78,25 +78,22 @@ PM.stimRange = (linspace(PM.PF([paramsTrue(1) paramsTrue(2) 0 0],.01,'inverse'),
 
 %Define parameter ranges to be included in posterior
 priorAlphaRange = linspace(PM.PF([paramsTrue(1) paramsTrue(2) 0 0],.01,'inverse'),PM.PF([paramsTrue(1) paramsTrue(2) 0 0],.99,'inverse'),grain);
-priorBetaRange =  linspace(log10(.0625),log10(16),grain); %OBS. Stated in Log!
+priorBetaRange =  linspace(log10(.0625),log10(5),grain); %OBS. Stated in Log!
 priorGammaRange = .02;  
 %priorLambdaRange = [0:.01:.1];
 priorLambdaRange = .02; 
 
 [PM.priorAlphas, PM.priorBetas, PM.priorGammas, PM.priorLambdas] = ndgrid(priorAlphaRange,priorBetaRange,priorGammaRange,priorLambdaRange);
 
-
 %PDF
     % "First, a prior probability distribution p0(lambda) for the 
     % psychometric functions must be set up" [Kontsevich]
-    prior = ones(length(priorAlphaRange),length(priorBetaRange),length(priorGammaRange),length(priorLambdaRange));
-    prior = prior./numel(prior); % 1/40401
-    PM.pdf = prior; 
+%     prior = ones(length(priorAlphaRange),length(priorBetaRange),length(priorGammaRange),length(priorLambdaRange));
+%     prior = prior./numel(prior); % 1/40401
+%     PM.pdf = prior; 
 
 
-kagemix = pdfNormalFunc(PM.priorAlphas, UDestimatiedThreshold, 1.88); 
-kagemix2 = pdfNormalFunc(PM.priorBetas, log10(4.4), log10(1.88)); % Jenny values (see mail) 
-PM.pdf = kagemix .*kagemix2; 
+kagemix = pdfNormalFunc(priorAlphaRange, UDestimatiedThreshold, 1.88); 
 
 %prior = PAL_pdfNormal(PM.priorAlphas,0,1).*PAL_pdfNormal(PM.priorBetas,log10(1),1);
   
