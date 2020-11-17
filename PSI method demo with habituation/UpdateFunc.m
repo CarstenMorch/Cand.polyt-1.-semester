@@ -28,6 +28,8 @@ function [PM] = UpdateFunc(PM, response)
 
 % Step 9
     [PM.PosteriorNextTrailSuccess,PM.PosteriorNextTrialFailure,PM.pSuccessGivenx] = PosteriorNextTrailFunc(PM.pdf, PM.LUT);
+
+
     [~, newIntensityIndexPosition] = EntropyFunc(PM.PosteriorNextTrailSuccess,PM.PosteriorNextTrialFailure, PM.pSuccessGivenx);
     
     PM.xCurrent = PM.stimRange(newIntensityIndexPosition);

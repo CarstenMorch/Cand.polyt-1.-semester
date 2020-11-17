@@ -1,6 +1,6 @@
 function UD = UpdateUD(UD, response)
 
-trial = length(UD.x)
+trial = length(UD.x);
 UD.response(trial) = response;
 
 if trial == 1

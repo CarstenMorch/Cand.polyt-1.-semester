@@ -4,10 +4,8 @@
 %
 
 function [PosteriorNextTrailSuccess,PosteriorNextTrialFailure,pSuccessGivenx] = PosteriorNextTrailFunc(pdf,LUT)
-% disp('kagemix400')
-% pdf = shiftkim(pdf); 
-% size(pdf) 
-% size(LUT)
+disp(kagemix400')size(pdf) 
+    size(LUT)
 
     % obs: LUT = p(r|λ,x)
    
